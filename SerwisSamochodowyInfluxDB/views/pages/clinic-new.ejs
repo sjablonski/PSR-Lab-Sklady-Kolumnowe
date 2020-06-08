@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <%- include ("../partials/head") %>
+</head>
+<body class="bg-light">
+<%- include ("../partials/header") %>
+<main>
+    <div class="container my-4">
+        <form method="POST" enctype="application/x-www-form-urlencoded">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="clinicName">Nazwa</label>
+                    <input type="text" class="form-control" id="clinicName" name="clinicName" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="location">Lokalizacja</label>
+                    <input type="text" class="form-control" id="location" name="location" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="phone">Telefon</label>
+                    <input type="text" class="form-control" id="phone" name="phone" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="nip">NIP</label>
+                    <input type="text" class="form-control" id="nip" name="nip" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <%- include('../partials/tableOfDoctors', {doctors}); %>
+                </div>
+            </div>
+            <div class="d-flex flex-row-reverse">
+                <button type="submit" class="btn btn-primary">Dodaj</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<%- include ("../partials/scripts") %>
+
+</body>
+</html>

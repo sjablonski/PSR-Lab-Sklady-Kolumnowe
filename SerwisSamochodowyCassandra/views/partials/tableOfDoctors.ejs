@@ -1,0 +1,26 @@
+<label>Lekarze:</label>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">ID</th>
+            <th scope="col">Imię i nazwisko</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% doctors && doctors.forEach(function(doctor) { %>
+        <tr>
+            <td>
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="<%= doctor.id %>" name="doctors" value="<%= doctor.id %>;<%= doctor.firstName %> <%= doctor.lastName %>">
+                    <label class="custom-control-label" for="<%= doctor.id %>"></label>
+                </div>
+            </td>
+            <td><%= doctor.id %></td>
+            <td><%= doctor.firstName %> <%= doctor.lastName %></td>
+        </tr>
+        <% }); %>
+        </tbody>
+    </table>
+</div>

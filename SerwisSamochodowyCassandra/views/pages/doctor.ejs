@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <%- include ("../partials/head") %>
+</head>
+<body class="bg-light">
+<%- include ("../partials/header") %>
+<main>
+    <div class="container my-4">
+        <div class="row my-4">
+            <div class="col-12">
+                <a href="/doctor/new" type="button" class="btn btn-primary">Dodaj lekarza</a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Imię</th>
+                    <th scope="col">Nazwisko</th>
+                    <th scope="col">Liczba przychodni</th>
+                    <th scope="col"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <% doctors && doctors.forEach(function(doctor) { %>
+                <tr>
+                    <th scope="row"><%= doctor.id %></th>
+                    <td><%= doctor.firstName %></td>
+                    <td><%= doctor.lastName %></td>
+                    <td><%= doctor.clinics ? doctor.clinics.length : 0 %></td>
+                    <td>
+                        <a class="btn btn-success" type="button" href="/doctor/id/<%= doctor.id %>">Edytuj</a>
+                        <a href="/doctor/id/<%= doctor.id %>/visit/new" type="button" class="btn btn-primary">Dodaj wizytę</a>
+                        <button class="btn btn-danger" type="button" data-toggle="modal" data-target="#modalDelete<%= doctor.id %>">
+                            Usuń
+                        </button>
+                        <%- include('../partials/modalDelete', {action: `/doctor/id/${doctor.id}`, id: doctor.id}); %>
+                    </td>
+                </tr>
+                <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<%- include ("../partials/scripts") %>
+
+</body>
+</html>

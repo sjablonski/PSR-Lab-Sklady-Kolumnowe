@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <%- include ("../partials/head") %>
+</head>
+<body class="bg-light">
+<%- include ("../partials/header") %>
+<main>
+    <div class="container my-4">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="doctorName">Lekarz</label>
+                <input type="text" class="form-control" id="doctorName" name="doctorName"
+                       value="<%= visit.doctor.name %>" readonly>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="patientName">Pacjent</label>
+                <input type="text" class="form-control" id="patientName" name="patientName"
+                       value="<%= visit.patient.firstName %> <%= visit.patient.lastName %>" readonly>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="date">Data</label>
+                <input type="text" class="form-control" id="date" name="date" value="<%= visit.date %>" readonly>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="type">Wizyta w ramach</label>
+                <input type="text" class="form-control" id="type" name="type" value="<%= visit.type %>" readonly>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="specialization">Specjalizacja</label>
+                <input type="text" class="form-control" id="specialization" name="specialization"
+                       value="<%= visit.specialization %>" readonly>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="clinic">Przychodnia</label>
+                <input type="text" class="form-control" id="clinic" name="clinic" value="<%= visit.clinic && visit.clinic.name %>"
+                       readonly>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-12">
+                <label for="description">Opis</label>
+                <input type="text" class="form-control" id="description" name="description"
+                       value="<%= visit.patient.description %>" readonly>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include ("../partials/scripts") %>
+
+</body>
+</html>
