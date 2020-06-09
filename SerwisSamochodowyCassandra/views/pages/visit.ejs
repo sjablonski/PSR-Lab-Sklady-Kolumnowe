@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <%- include ("../partials/head") %>
+</head>
+<body class="bg-light">
+<%- include ("../partials/header") %>
+<main>
+    <div class="container my-4">
+        <div class="row my-4">
+            <div class="col-12">
+                <a href="/visit/new" type="button" class="btn btn-primary">Dodaj wizytę</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 accordion">
+                <div class="card">
+                    <div class="card-header" id="headingOne">
+                        <h4 class="mb-0">
+                            <a class="btn-block" type="button" data-toggle="collapse" data-target="#collapseOne"
+                               aria-expanded="true" aria-controls="collapseOne">
+                                Przyszłe wizyty
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">Data</th>
+                                        <th scope="col">Typ</th>
+                                        <th scope="col">Klient</th>
+                                        <th scope="col">Samochód</th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <% pendingVisits && pendingVisits.forEach(function(visit) { %>
+                                        <tr>
+                                            <td><%= visit.date %></td>
+                                            <td><%= visit.type %></td>
+                                            <td><a href="/client/id/<%= visit.client.id %>"><%= visit.client.name %></a></td>
+                                            <td><%= visit.car.manufacturer %> <%= visit.car.model %></td>
+                                            <td>
+                                                <a href="/visit/id/<%= visit.id %>" type="button" class="btn btn-success">Podgląd</a>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingTwo">
+                        <h4 class="mb-0">
+                            <a class="btn-block" type="button" data-toggle="collapse" data-target="#collapseTwo"
+                               aria-expanded="true" aria-controls="collapseTwo">
+                                Historia wizyt
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">Data</th>
+                                        <th scope="col">Typ</th>
+                                        <th scope="col">Klient</th>
+                                        <th scope="col">Samochód</th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <% hisotryVisits && hisotryVisits.forEach(function(visit) { %>
+                                        <tr>
+                                            <td><%= visit.date %></td>
+                                            <td><%= visit.type %></td>
+                                            <td><a href="/client/id/<%= visit.client.id %>"><%= visit.client.name %></a></td>
+                                            <td><%= visit.car.manufacturer %> <%= visit.car.model %></td>
+                                            <td>
+                                                <a href="/visit/id/<%= visit.id %>" type="button" class="btn btn-success">Podgląd</a>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include ("../partials/scripts") %>
+</body>
+</html>

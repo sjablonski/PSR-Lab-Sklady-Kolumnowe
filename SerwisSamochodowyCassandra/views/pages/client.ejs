@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <%- include ("../partials/head") %>
+</head>
+<body class="bg-light">
+<%- include ("../partials/header") %>
+<main>
+    <div class="container my-4">
+        <div class="row my-4">
+            <div class="col-12">
+                <a href="/client/new" type="button" class="btn btn-primary">Dodaj klienta</a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Imię</th>
+                    <th scope="col">Nazwisko</th>
+                    <th scope="col">Telefon</th>
+                    <th scope="col">Email</th>
+                    <th scope="col"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <% clients && clients.forEach(function(client) { %>
+                <tr>
+                    <th scope="row"><%= client.id %></th>
+                    <td><%= client.firstname %></td>
+                    <td><%= client.lastname %></td>
+                    <td><%= client.phone %></td>
+                    <td><%= client.email %></td>
+                    <td>
+                        <a class="btn btn-success" type="button" href="/client/id/<%= client.id %>">Edytuj</a>
+                        <button class="btn btn-danger" type="button" data-toggle="modal" data-target="#modalDelete<%= client.id %>">
+                            Usuń
+                        </button>
+                        <%- include('../partials/modalDelete', {action: `/client/id/${client.id}`, id: client.id}); %>
+                    </td>
+                </tr>
+                <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<%- include ("../partials/scripts") %>
+
+</body>
+</html>

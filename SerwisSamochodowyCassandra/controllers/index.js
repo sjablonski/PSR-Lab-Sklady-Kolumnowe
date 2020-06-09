@@ -1,9 +1,9 @@
-const clinicCtrl = require('./ClinicController');
-const doctorCtrl = require('./DoctorController');
+const clientCtrl = require('./ClientController');
+const employeeCtrl = require('./EmployeeController');
 const visitCtrl = require('./VisitController');
 
 module.exports = {
-    clinicCtrl,
-    doctorCtrl,
+    clientCtrl,
+    employeeCtrl,
     visitCtrl
 };

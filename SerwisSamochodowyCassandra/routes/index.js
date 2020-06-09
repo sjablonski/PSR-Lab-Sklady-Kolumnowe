@@ -1,34 +1,34 @@
 const bodyParser = require('body-parser');
-const { clinicCtrl, doctorCtrl, visitCtrl } = require('../controllers');
+const { clientCtrl, employeeCtrl, visitCtrl } = require('../controllers');
 
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 const routers = (app, db) => {
-    const doctor = doctorCtrl(db);
+    const employee = employeeCtrl(db);
     const visit = visitCtrl(db);
-    const clinic = clinicCtrl(db);
+    const client = clientCtrl(db);
 
-    app.get('/', visit.getAllVisit);
+    app.get('/', visit.getAllTodayVisits);
 
-    app.get('/doctor', doctor.getAllDoctors);
-    app.get('/doctor/id/:id', doctor.getSingleDoctor);
-    app.get('/doctor/new', doctor.addDoctorGet);
-    app.post('/doctor/new', urlencodedParser, doctor.addDoctorPost);
-    app.put('/doctor/id/:id', doctor.updateDoctor);
-    app.delete('/doctor/id/:id', doctor.deleteDoctor);
+    app.get('/employee', employee.getAllEmployees);
+    app.get('/employee/id/:id', employee.getSingleEmployee);
+    app.get('/employee/new', employee.addEmployeeGet);
+    app.post('/employee/new', urlencodedParser, employee.addEmployeePost);
+    app.put('/employee/id/:id', employee.updateEmployee);
+    app.delete('/employee/id/:id', employee.deleteEmployee);
 
-    app.get('/clinic', clinic.getAllClinics);
-    app.get('/clinic/id/:id', clinic.getSingleClinic);
-    app.get('/clinic/new', clinic.addClinicGet);
-    app.post('/clinic/new',urlencodedParser, clinic.addClinicPost);
-    app.put('/clinic/id/:id', clinic.updateClinic);
-    app.delete('/clinic/id/:id', clinic.deleteClinic);
+    app.get('/client', client.getAllClients);
+    app.get('/client/id/:id', client.getSingleClient);
+    app.get('/client/new', client.addClientGet);
+    app.post('/client/new',urlencodedParser, client.addClientPost);
+    app.put('/client/id/:id', client.updateClient);
+    app.delete('/client/id/:id', client.deleteClient);
 
-    app.get('/doctor/id/:id/visit/new', visit.addVisitGet);
-    app.post('/doctor/id/:id/visit/new', visit.addVisitPost);
-    app.get('/visit/reservation/:id', visit.reservationVisitGet);
-    app.put('/visit/reservation/:id', visit.reservationVisitPut);
-    app.get('/visit/history/:id', visit.getHistory);
+    app.get('/visit', visit.getAllVisits);
+    app.get('/visit/new', visit.addVisitGet);
+    app.post('/visit/new', visit.addVisitPost);
+    app.put('/visit/id/:id', visit.updateVisit);
+    app.get('/visit/id/:id', visit.getVisit);
 
     return app;
 }

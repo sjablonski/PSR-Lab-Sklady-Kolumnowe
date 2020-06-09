@@ -1,89 +1,164 @@
-const { v4: uuidv4 } = require('uuid');
+const {v4: uuidv4} = require('uuid');
+const {tableVisit, tableClient, tableEmployee, tableVisitColumns} = require('../constants');
 
 const visit = (db) => {
     const createObject = (input) => {
-        let out = {};
-        if(input) {
-            const tmp = input.split(";");
-            out = {
-                id: tmp[0],
-                name: tmp[1]
-            }
+        const values = Object.values(input);
+        const obj = Object.keys(input).map((item, index) => {
+            let value = values[index];
+            value = typeof value === "number" ? value : `'${value}'`;
+            return `${item}: ${value}`
+        });
+        return `{${obj.join()}}`;
+    }
+
+    const createArray = (input) => {
+        return `[${input.map(item => createObject(item))}]`
+    }
+
+    const convertType = (type) => {
+        switch (type) {
+            case "overview": return "Przegląd";
+            case "diagnostics": return "Diagnostyka";
+            case "repair": return "Naprawa";
+            case "service": return "Serwis";
+            default: return type;
         }
-        return out;
     }
 
     return {
-        getAllVisit: async(req, res) => {
+        getAllTodayVisits: async (req, res) => {
             try {
-                const activeVisit = await db.collection("visits").find({status: "open"}).toArray();
-                const historyVisit = await db.collection("visits").find({status: "close"}).toArray();
-                res.render('pages/index', { activeVisit, historyVisit });
-            } catch(err) {
+                const result = await db.execute(`SELECT * FROM ${tableVisit} WHERE date = '${new Date().toISOString().substr(0, 10)}' ALLOW FILTERING;`);
+                const visits = result.rows;
+                visits.forEach(visit => visit.type = convertType(visit.type));
+                res.render('pages/index', {visits});
+            } catch (err) {
                 console.error(err.message);
             }
         },
-        getHistory: async(req, res) => {
+        getAllVisits: async (req, res) => {
+            try {
+                const result = await db.execute(`SELECT * FROM ${tableVisit};`);
+                const pendingVisits = [];
+                const hisotryVisits = [];
+                result.rows.forEach(item => {
+                    const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    if (itemDate > today) {
+                        pendingVisits.push(item);
+                    } else if (itemDate < today) {
+                        hisotryVisits.push(item);
+                    }
+                });
+                res.render('pages/visit', {pendingVisits, hisotryVisits});
+            } catch (err) {
+                console.error(err.message);
+            }
+        },
+        getVisit: async (req, res) => {
             try {
                 const id = req.params.id;
-                const visit = await db.collection("visits").findOne({id: id});
-                res.render('pages/visit-id', { visit });
-            } catch(err) {
+                const resEmployees = await db.execute(`SELECT * FROM ${tableEmployee};`);
+                const resClients = await db.execute(`SELECT * FROM ${tableClient};`);
+                const resVisit = await db.execute(`SELECT * FROM ${tableVisit} WHERE id = '${id}';`);
+                const employees = resEmployees.rows;
+                const clients = resClients.rows;
+                const visit = resVisit.rows[0];
+
+                res.render('pages/visit-id', {visit, employees, clients});
+            } catch (err) {
                 console.error(err.message);
             }
         },
-        reservationVisitGet: (req, res) => {
+        addVisitGet: async (req, res) => {
             try {
-                const id = req.params.id;
-                res.render('pages/visit-reservation', {id});
-            } catch(err) {
+                const resEmployees = await db.execute(`SELECT * FROM ${tableEmployee};`);
+                const resClients = await db.execute(`SELECT * FROM ${tableClient};`);
+                const employees = resEmployees.rows;
+                const clients = resClients.rows;
+                res.render('pages/visit-new', {employees, clients});
+            } catch (err) {
                 console.error(err.message);
             }
         },
-        reservationVisitPut: async(req, res) => {
+        addVisitPost: async (req, res) => {
+            try {
+                let employees = req.body.employees;
+                employees = employees && Array.isArray(employees) ? employees : [employees || '{"id": "", "name": ""}'];
+                employees = employees.map(employee => employee && JSON.parse(employee));
+
+                const visit = {
+                    id: uuidv4().substr(0, 5),
+                    date: req.body.date,
+                    type: req.body.type,
+                    car: {
+                        manufacturer: req.body.manufacturer,
+                        model: req.body.model,
+                        year: req.body.year
+                    },
+                    employees,
+                    client: {
+                        id: req.body.clientId,
+                        name: req.body.clientName,
+                        email: req.body.email,
+                        phone: req.body.phone
+                    },
+                    description: req.body.description
+                };
+
+                await db.execute(`INSERT INTO ${tableVisit} JSON '${JSON.stringify(visit)}';`);
+                res.render('pages/success', {success: "Dodano wizytę"});
+            } catch (err) {
+                console.error(err.message);
+            }
+        },
+        updateVisit: async (req, res) => {
             try {
                 const id = req.body.id;
+                let employees = req.body.employees;
+                employees = employees && Array.isArray(employees) ? employees : [employees || '{"id": "", "name": ""}'];
+                employees = employees.map(employee => employee && JSON.parse(employee));
+
                 const visit = {
-                    status: 'close',
-                    patient: {
-                        firstName: req.body.firstName,
-                        lastName: req.body.lastName,
-                        description: req.body.description
-                    }
-                };
-                await db.collection("visits").updateOne({id}, {$set: visit});
-                res.render('pages/success', {success: "Zarezerwowano wizytę"});
-            } catch(err) {
-                console.error(err.message);
-            }
-        },
-        addVisitGet: async(req, res) => {
-            try {
-                const id = req.params.id;
-                const doctor = await db.collection("doctors").findOne({id: id});
-                res.render('pages/visit-new', {doctor});
-            } catch(err) {
-                console.error(err.message);
-            }
-        },
-        addVisitPost: async(req, res) => {
-            try {
-                const clinic = createObject(req.body.clinic);
-                const visit = {
-                    id: uuidv4().substr(0,5),
                     date: req.body.date,
-                    specialization: req.body.specializations,
-                    doctor: {
-                        id: req.body.doctorID,
-                        name: `${req.body.firstName} ${req.body.lastName}`
-                    },
                     type: req.body.type,
-                    status: 'open',
-                    clinic
+                    car: {
+                        manufacturer: req.body.manufacturer,
+                        model: req.body.model,
+                        year: parseInt(req.body.year)
+                    },
+                    employees,
+                    client: {
+                        id: req.body.clientId,
+                        name: req.body.clientName,
+                        email: req.body.email,
+                        phone: req.body.phone
+                    },
+                    description: req.body.description
                 };
-                await db.collection("visits").insertOne(visit);
-                res.render('pages/success', {success: "Dodano wizytę"});
-            } catch(err) {
+
+                const columns = tableVisitColumns.split(",")
+                    .map((item) => {
+                        const substr = item.substring(1, item.indexOf(" ", 1));
+                        let value;
+                        if (typeof visit[substr] === "number") {
+                            value = visit[substr];
+                        } else if (Array.isArray(visit[substr])) {
+                            value = createArray(visit[substr]);
+                        } else if (typeof visit[substr] === "object") {
+                            value = createObject(visit[substr]);
+                        } else {
+                            value = `'${visit[substr]}'`;
+                        }
+                        return visit[substr] ? substr + `=${value}` : "";
+                    })
+                    .filter((item) => item)
+                    .join();
+                const query = `UPDATE ${tableVisit} SET ${columns} WHERE id = '${id}';`;
+                db.execute(query);
+                res.render('pages/success', {success: "Zaktualizowano dane o pracowniku"});
+            } catch (err) {
                 console.error(err.message);
             }
         }

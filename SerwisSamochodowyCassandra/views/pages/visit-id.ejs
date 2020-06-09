@@ -7,51 +7,111 @@
 <%- include ("../partials/header") %>
 <main>
     <div class="container my-4">
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="doctorName">Lekarz</label>
-                <input type="text" class="form-control" id="doctorName" name="doctorName"
-                       value="<%= visit.doctor.name %>" readonly>
+        <form method="POST" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" name="_method" value="PUT">
+            <input type="hidden" name="id" value="<%= visit.id %>">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="date">Data</label>
+                    <input type="date" class="form-control" id="date" name="date" value="<%= visit.date %>" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="type">Rodzaj wizyty</label>
+                    <select class="form-control" id="type" name="type" required>
+                        <option value="overview">Przegląd</option>
+                        <option value="diagnostics">Diagnostyka</option>
+                        <option value="repair">Naprawa</option>
+                        <option value="service">Serwis</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <label for="patientName">Pacjent</label>
-                <input type="text" class="form-control" id="patientName" name="patientName"
-                       value="<%= visit.patient.firstName %> <%= visit.patient.lastName %>" readonly>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="manufacturer">Producent</label>
+                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" value="<%= visit.car.manufacturer %>" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="model">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" value="<%= visit.car.model %>" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="year">Rok produkcji</label>
+                    <input type="text" class="form-control" id="year" name="year" value="<%= visit.car.year %>" required>
+                </div>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="date">Data</label>
-                <input type="text" class="form-control" id="date" name="date" value="<%= visit.date %>" readonly>
+            <div class="form-row">
+                <div class="form-group col-sm-6">
+                    <label>Pracownicy:</label>
+                    <% employees && employees.forEach(function(employee) { %>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="<%= employee.id %>" name="employees" value='{"id":"<%= employee.id %>", "name": "<%= employee.firstname %> <%= employee.lastname %>"}'>
+                            <label class="custom-control-label" for="<%= employee.id  %>"><%= employee.firstname %> <%= employee.lastname %></label>
+                        </div>
+                    <% }); %>
+                </div>
+                <div class="form-group col-sm-6">
+                    <div class="form-group">
+                    <label>Klient:</label>
+                    <select class="form-control" id="client" name="clientId" required>
+                        <option value="" disabled selected>Wybierz klienta</option>
+                        <% clients && clients.forEach(function(client) { %>
+                            <option value="<%= client.id %>"><%= client.firstname %> <%= client.lastname %></option>
+                        <% }); %>
+                    </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientName">Imię i nazwisko</label>
+                        <input type="text" class="form-control" id="clientName" name="clientName" value="<%= visit.client.name %>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="text" class="form-control" id="email" name="email" value="<%= visit.client.email %>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Telefon</label>
+                        <input type="text" class="form-control" id="phone" name="phone" value="<%= visit.client.phone %>" readonly>
+                    </div>
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <label for="type">Wizyta w ramach</label>
-                <input type="text" class="form-control" id="type" name="type" value="<%= visit.type %>" readonly>
+            <div class="form-row">
+                <div class="form-group col-12">
+                    <label for="description">Opis</label>
+                    <input type="text" class="form-control" id="description" name="description" value="<%= visit.description %>">
+                </div>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="specialization">Specjalizacja</label>
-                <input type="text" class="form-control" id="specialization" name="specialization"
-                       value="<%= visit.specialization %>" readonly>
+            <div class="d-flex flex-row-reverse">
+                <button type="submit" class="btn btn-primary">Edytuj</button>
             </div>
-            <div class="form-group col-md-6">
-                <label for="clinic">Przychodnia</label>
-                <input type="text" class="form-control" id="clinic" name="clinic" value="<%= visit.clinic && visit.clinic.name %>"
-                       readonly>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-12">
-                <label for="description">Opis</label>
-                <input type="text" class="form-control" id="description" name="description"
-                       value="<%= visit.patient.description %>" readonly>
-            </div>
-        </div>
+        </form>
     </div>
 </main>
 
 <%- include ("../partials/scripts") %>
+
+<script>
+    const client = document.getElementById("client");
+    const clientName = document.getElementById("clientName");
+    const clientEmail = document.getElementById("email");
+    const clientPhone = document.getElementById("phone");
+    const clients = <%- JSON.stringify(clients) %>;
+
+    client.value = '<%- visit.client.id %>';
+
+    client.addEventListener("change", (ev) => {
+        const result = clients.filter(item => item.id === ev.target.value);
+        clientName.value = `${result[0].firstname} ${result[0].lastname}`;
+        clientEmail.value = result[0].email;
+        clientPhone.value = result[0].phone;
+    },false);
+
+    const employees = <%- JSON.stringify(visit.employees) %>;
+    const employeesCheckbox = document.querySelectorAll("[name='employees']");
+    employees.forEach(employee => employeesCheckbox.forEach(checkbox => {
+        if(employee.id === checkbox.id) {
+            checkbox.checked = true;
+        }
+    }));
+</script>
 
 </body>
 </html>
