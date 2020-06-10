@@ -1,37 +1,43 @@
 const {v4: uuidv4} = require('uuid');
-const {tableVisit, tableClient, tableEmployee, tableVisitColumns} = require('../constants');
+const cassandra = require('cassandra-driver');
+const keysToCamelCase = require('../utils/keysUnderscoreToCamelCase');
+const {keyspace, tableVisit, tableClient, tableEmployee, tableClientVisits, tableEmployeeVisits} = require('../constants');
 
 const visit = (db) => {
-    const createObject = (input) => {
-        const values = Object.values(input);
-        const obj = Object.keys(input).map((item, index) => {
-            let value = values[index];
-            value = typeof value === "number" ? value : `'${value}'`;
-            return `${item}: ${value}`
-        });
-        return `{${obj.join()}}`;
-    }
-
-    const createArray = (input) => {
-        return `[${input.map(item => createObject(item))}]`
-    }
+    const Mapper = cassandra.mapping.Mapper;
+    const mapper = new Mapper(db, {
+        models: {
+            'Visit': {
+                tables: ['visit', 'client_visits', 'employee_visits'],
+                keyspace,
+                mappings: new cassandra.mapping.UnderscoreCqlToCamelCaseMappings()
+            }
+        }
+    });
+    const visitMapper = mapper.forModel('Visit');
 
     const convertType = (type) => {
         switch (type) {
-            case "overview": return "Przegląd";
-            case "diagnostics": return "Diagnostyka";
-            case "repair": return "Naprawa";
-            case "service": return "Serwis";
-            default: return type;
+            case "overview":
+                return "Przegląd";
+            case "diagnostics":
+                return "Diagnostyka";
+            case "repair":
+                return "Naprawa";
+            case "service":
+                return "Serwis";
+            default:
+                return type;
         }
-    }
+    };
 
     return {
         getAllTodayVisits: async (req, res) => {
             try {
-                const result = await db.execute(`SELECT * FROM ${tableVisit} WHERE date = '${new Date().toISOString().substr(0, 10)}' ALLOW FILTERING;`);
-                const visits = result.rows;
+                const result = await db.execute(`SELECT * FROM ${tableVisit} WHERE date = '${new Date().toISOString().substr(0, 10)}' AND status='open' ALLOW FILTERING;`);
+                const visits = keysToCamelCase(result.rows);
                 visits.forEach(visit => visit.type = convertType(visit.type));
+
                 res.render('pages/index', {visits});
             } catch (err) {
                 console.error(err.message);
@@ -39,19 +45,46 @@ const visit = (db) => {
         },
         getAllVisits: async (req, res) => {
             try {
-                const result = await db.execute(`SELECT * FROM ${tableVisit};`);
                 const pendingVisits = [];
                 const hisotryVisits = [];
-                result.rows.forEach(item => {
-                    const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
+
+                const result = await db.execute(`SELECT * FROM ${tableVisit};`);
+                const visits = keysToCamelCase(result.rows);
+
+                visits.forEach(visit => {
+                    const itemDate = new Date(visit.date).setHours(0, 0, 0, 0);
                     const today = new Date().setHours(0, 0, 0, 0);
-                    if (itemDate > today) {
-                        pendingVisits.push(item);
-                    } else if (itemDate < today) {
-                        hisotryVisits.push(item);
+                    visit.type = convertType(visit.type);
+                    if (itemDate > today && visit.status === 'open') {
+                        pendingVisits.push(visit);
+                    } else if (itemDate < today || visit.status === 'close') {
+                        hisotryVisits.push(visit);
                     }
                 });
+
                 res.render('pages/visit', {pendingVisits, hisotryVisits});
+            } catch (err) {
+                console.error(err.message);
+            }
+        },
+        getAllClientVisits: async (req, res) => {
+            try {
+                const id = req.params.id;
+                let visits = await visitMapper.find({clientId: id});
+                visits = visits.toArray().map(visit => {visit.type = convertType(visit.type); return visit});
+
+                res.render('pages/client-visits', {visits});
+            } catch (err) {
+                console.error(err.message);
+            }
+        },
+        getAllEmployeeVisits: async (req, res) => {
+            try {
+                const id = req.params.id;
+                let visits = await visitMapper.find({employeeId: id});
+                visits = visits.toArray().map(visit => {visit.type = convertType(visit.type); return visit});
+
+                res.render('pages/employee-visits', {visits});
             } catch (err) {
                 console.error(err.message);
             }
@@ -59,14 +92,9 @@ const visit = (db) => {
         getVisit: async (req, res) => {
             try {
                 const id = req.params.id;
-                const resEmployees = await db.execute(`SELECT * FROM ${tableEmployee};`);
-                const resClients = await db.execute(`SELECT * FROM ${tableClient};`);
-                const resVisit = await db.execute(`SELECT * FROM ${tableVisit} WHERE id = '${id}';`);
-                const employees = resEmployees.rows;
-                const clients = resClients.rows;
-                const visit = resVisit.rows[0];
-
-                res.render('pages/visit-id', {visit, employees, clients});
+                const result = await visitMapper.find({visitId: id});
+                const visit = result.first();
+                res.render('pages/visit-id', {visit});
             } catch (err) {
                 console.error(err.message);
             }
@@ -75,8 +103,9 @@ const visit = (db) => {
             try {
                 const resEmployees = await db.execute(`SELECT * FROM ${tableEmployee};`);
                 const resClients = await db.execute(`SELECT * FROM ${tableClient};`);
-                const employees = resEmployees.rows;
-                const clients = resClients.rows;
+                const employees = keysToCamelCase(resEmployees.rows);
+                const clients = keysToCamelCase(resClients.rows);
+
                 res.render('pages/visit-new', {employees, clients});
             } catch (err) {
                 console.error(err.message);
@@ -84,31 +113,28 @@ const visit = (db) => {
         },
         addVisitPost: async (req, res) => {
             try {
-                let employees = req.body.employees;
-                employees = employees && Array.isArray(employees) ? employees : [employees || '{"id": "", "name": ""}'];
-                employees = employees.map(employee => employee && JSON.parse(employee));
 
                 const visit = {
-                    id: uuidv4().substr(0, 5),
+                    visitId: uuidv4().substr(0, 5),
+                    clientId: req.body.clientID,
+                    employeeId: req.body.employeeID,
                     date: req.body.date,
                     type: req.body.type,
-                    cost: parseFloat(req.body.cost),
+                    price: req.body.price ? parseFloat(req.body.price) : 0,
+                    status: req.body.status,
                     car: {
                         manufacturer: req.body.manufacturer,
                         model: req.body.model,
                         year: parseInt(req.body.year)
                     },
-                    employees,
-                    client: {
-                        id: req.body.clientId,
-                        name: req.body.clientName,
-                        email: req.body.email,
-                        phone: req.body.phone
-                    },
-                    description: req.body.description
+                    carName: `${req.body.manufacturer} ${req.body.model}`,
+                    description: req.body.description,
+                    employeeName: req.body.employeeName,
+                    clientName: req.body.clientName,
                 };
 
-                await db.execute(`INSERT INTO ${tableVisit} JSON '${JSON.stringify(visit)}';`);
+                await visitMapper.insert(visit);
+
                 res.render('pages/success', {success: "Dodano wizytę"});
             } catch (err) {
                 console.error(err.message);
@@ -116,50 +142,43 @@ const visit = (db) => {
         },
         updateVisit: async (req, res) => {
             try {
-                const id = req.body.id;
-                let employees = req.body.employees;
-                employees = employees && Array.isArray(employees) ? employees : [employees || '{"id": "", "name": ""}'];
-                employees = employees.map(employee => employee && JSON.parse(employee));
-
                 const visit = {
+                    visitId: req.body.id,
+                    clientId: req.body.clientID,
+                    employeeId: req.body.employeeID,
                     date: req.body.date,
                     type: req.body.type,
-                    cost: parseFloat(req.body.cost),
+                    price: req.body.price ? parseFloat(req.body.price) : 0,
+                    status: req.body.status,
                     car: {
                         manufacturer: req.body.manufacturer,
                         model: req.body.model,
                         year: parseInt(req.body.year)
                     },
-                    employees,
-                    client: {
-                        id: req.body.clientId,
-                        name: req.body.clientName,
-                        email: req.body.email,
-                        phone: req.body.phone
-                    },
-                    description: req.body.description
+                    carName: `${req.body.manufacturer} ${req.body.model}`,
+                    description: req.body.description,
+                    employeeName: req.body.employeeName,
+                    clientName: req.body.clientName,
                 };
 
-                const columns = tableVisitColumns.split(",")
-                    .map((item) => {
-                        const substr = item.substring(1, item.indexOf(" ", 1));
-                        let value;
-                        if (typeof visit[substr] === "number") {
-                            value = visit[substr];
-                        } else if (Array.isArray(visit[substr])) {
-                            value = createArray(visit[substr]);
-                        } else if (typeof visit[substr] === "object") {
-                            value = createObject(visit[substr]);
-                        } else {
-                            value = `'${visit[substr]}'`;
-                        }
-                        return visit[substr] ? substr + `=${value}` : "";
-                    })
-                    .filter((item) => item)
-                    .join();
-                const query = `UPDATE ${tableVisit} SET ${columns} WHERE id = '${id}';`;
-                db.execute(query);
-                res.render('pages/success', {success: "Zaktualizowano dane o pracowniku"});
+                await visitMapper.update(visit);
+
+                res.render('pages/success', {success: "Zaktualizowano dane o wizycie"});
+            } catch (err) {
+                console.error(err.message);
+            }
+        },
+        deleteVisit: async (req, res) => {
+            try {
+                const id = req.body.id;
+
+                const result = await db.execute(`SELECT * FROM ${tableVisit} WHERE visit_id = '${id}';`);
+                for (const row of result.rows) {
+                    await db.execute(`DELETE FROM ${tableClientVisits} WHERE client_id = '${row.client_id}' AND visit_id = '${id}';`);
+                    await db.execute(`DELETE FROM ${tableEmployeeVisits} WHERE employee_id = '${row.employee_id}' AND visit_id = '${id}';`);
+                }
+                await visitMapper.remove({visitId: id});
+                res.render('pages/success', {success: "Usunięto wizytę"});
             } catch (err) {
                 console.error(err.message);
             }

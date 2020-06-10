@@ -28,12 +28,13 @@
                 <% clients && clients.forEach(function(client) { %>
                 <tr>
                     <th scope="row"><%= client.id %></th>
-                    <td><%= client.firstname %></td>
-                    <td><%= client.lastname %></td>
+                    <td><%= client.firstName %></td>
+                    <td><%= client.lastName %></td>
                     <td><%= client.phone %></td>
                     <td><%= client.email %></td>
                     <td>
-                        <a class="btn btn-success" type="button" href="/client/id/<%= client.id %>">Edytuj</a>
+                        <a class="btn btn-primary" type="button" href="/client/id/<%= client.id %>">Podgląd</a>
+                        <a class="btn btn-primary" type="button" href="/client/id/<%= client.id %>/visits">Wizyty</a>
                         <button class="btn btn-danger" type="button" data-toggle="modal" data-target="#modalDelete<%= client.id %>">
                             Usuń
                         </button>
