@@ -3,14 +3,21 @@ const methodOverride = require('method-override');
 const cassandra = require('cassandra-driver');
 const routes = require('./routes');
 const {
+    TYPE,
+    TABLE,
     keyspace,
-    createKeyspace,
-    createCar,
-    createClient,
-    createEmployee,
-    createVisit,
-    createClientVisits,
-    createEmployeeVisits
+    typeClient,
+    typeEmployee,
+    typeCar,
+    typeClientColumns,
+    typeEmployeeColumns,
+    typeCarColumns,
+    tableVisit,
+    tableClient,
+    tableEmployee,
+    tableVisitColumns,
+    tableClientColumns,
+    tableEmployeeColumns
 } = require('./constants');
 
 const app = express();
@@ -27,27 +34,34 @@ app.set('view engine', 'ejs');
 
 const client = new cassandra.Client({contactPoints: ['127.0.0.1'], localDataCenter: 'datacenter1'});
 
+function create(type, name, columns) {
+    const query = `CREATE ${type} IF NOT EXISTS ${name} (${columns})`;
+    return client.execute(query);
+}
+
 client.connect()
     .then(() => {
-        return client.execute(`${createKeyspace}`);
+        const query = `CREATE KEYSPACE IF NOT EXISTS ${keyspace} WITH replication =` +
+            "{'class': 'SimpleStrategy', 'replication_factor': '1' }";
+        return client.execute(query);
     })
     .then(() => {
-        return client.execute(`${createCar}`);
+        return create(TYPE, typeClient, typeClientColumns);
     })
     .then(() => {
-        return client.execute(`${createClient}`);
+        return create(TYPE, typeEmployee, typeEmployeeColumns);
     })
     .then(() => {
-        return client.execute(`${createEmployee}`);
+        return create(TYPE, typeCar, typeCarColumns);
     })
     .then(() => {
-        return client.execute(`${createVisit}`);
+        return create(TABLE, tableVisit, tableVisitColumns);
     })
     .then(() => {
-        return client.execute(`${createClientVisits}`);
+        return create(TABLE, tableClient, tableClientColumns);
     })
     .then(() => {
-        return client.execute(`${createEmployeeVisits}`);
+        return create(TABLE, tableEmployee, tableEmployeeColumns);
     })
     .then(() => {
         routes(app, client);
@@ -57,13 +71,16 @@ client.connect()
 
             console.log("App listening at http://%s:%s", host, port)
         });
-    })
-    .catch(err => {
-        console.error(err.message);
     });
 
 process.on('SIGINT', async () => {
     try {
+        await client.execute(`DROP TABLE IF EXISTS ${tableVisit};`);
+        await client.execute(`DROP TABLE IF EXISTS ${tableClient};`);
+        await client.execute(`DROP TABLE IF EXISTS ${tableEmployee};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeClient};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeEmployee};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeCar};`);
         await client.execute(`DROP KEYSPACE IF EXISTS ${keyspace};`);
         process.exit();
     } catch (err) {

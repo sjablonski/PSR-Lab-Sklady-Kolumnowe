@@ -26,11 +26,10 @@
                 <% employees && employees.forEach(function(employee) { %>
                 <tr>
                     <th scope="row"><%= employee.id %></th>
-                    <td><%= employee.firstName %></td>
-                    <td><%= employee.lastName %></td>
+                    <td><%= employee.firstname %></td>
+                    <td><%= employee.lastname %></td>
                     <td>
-                        <a class="btn btn-primary" type="button" href="/employee/id/<%= employee.id %>">Podgląd</a>
-                        <a class="btn btn-primary" type="button" href="/employee/id/<%= employee.id %>/visits">Wizyty</a>
+                        <a class="btn btn-success" type="button" href="/employee/id/<%= employee.id %>">Edytuj</a>
                         <button class="btn btn-danger" type="button" data-toggle="modal" data-target="#modalDelete<%= employee.id %>">
                             Usuń
                         </button>

@@ -24,14 +24,11 @@ const routers = (app, db) => {
     app.put('/client/id/:id', client.updateClient);
     app.delete('/client/id/:id', client.deleteClient);
 
-    app.get('/client/id/:id/visits', visit.getAllClientVisits);
-    app.get('/employee/id/:id/visits', visit.getAllEmployeeVisits);
     app.get('/visit', visit.getAllVisits);
     app.get('/visit/new', visit.addVisitGet);
     app.post('/visit/new', visit.addVisitPost);
     app.put('/visit/id/:id', visit.updateVisit);
     app.get('/visit/id/:id', visit.getVisit);
-    app.delete('/visit/id/:id', visit.deleteVisit);
 
     return app;
 }

@@ -11,12 +11,11 @@
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="date">Data</label>
-                    <input type="date" class="form-control" id="date" name="date" required>
+                    <input type="date" class="form-control" id="date" name="date" value="<%= new Date().toISOString().substr(0, 10); %>" required>
                 </div>
                 <div class="form-group col-md-4">
                     <label for="type">Rodzaj wizyty</label>
                     <select class="form-control" id="type" name="type" required>
-                        <option value="" disabled selected>Wybierz rodzaj wizyty</option>
                         <option value="overview">Przegląd</option>
                         <option value="diagnostics">Diagnostyka</option>
                         <option value="repair">Naprawa</option>
@@ -24,49 +23,11 @@
                     </select>
                 </div>
                 <div class="form-group col-md-4">
-                    <label for="status">Status</label>
-                    <select class="form-control" id="status" name="status" required>
-                        <option value="" disabled selected>Wybierz status</option>
-                        <option value="open">Niezrealizowana</option>
-                        <option value="close">Zrealizowana</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-8">
-                    <label for="description">Opis</label>
-                    <textarea class="form-control" id="description" name="description" rows="1"></textarea>
-                </div>
-                <div class="form-group col-md-4">
                     <label for="cost">Koszt</label>
-                    <input type="number" class="form-control" id="price" name="price">
+                    <input type="number" class="form-control" id="cost" name="cost">
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group col-sm-6">
-                    <h5>Pracownicy</h5>
-                    <select class="form-control" id="employee" name="employeeID" required>
-                        <option value="" disabled selected>Wybierz pracownika</option>
-                        <% employees && employees.forEach(function(employee) { %>
-                            <option value="<%= employee.id %>"><%= employee.firstName %> <%= employee.lastName %></option>
-                        <% }); %>
-                        <input type="text" class="form-control" id="employeeName" name="employeeName" hidden>
-                    </select>
-                </div>
-                <div class="form-group col-sm-6">
-                    <div class="form-group">
-                        <h5>Klient</h5>
-                        <select class="form-control" id="client" name="clientID" required>
-                            <option value="" disabled selected>Wybierz klienta</option>
-                            <% clients && clients.forEach(function(client) { %>
-                                <option value="<%= client.id %>"><%= client.firstName %> <%= client.lastName %></option>
-                            <% }); %>
-                        </select>
-                        <input type="text" class="form-control" id="clientName" name="clientName" hidden>
-                    </div>
-                </div>
-            </div>
-            <h5>Dane samochodu</h5>
+            <h4>Dane samochodu</h4>
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="manufacturer">Producent</label>
@@ -81,8 +42,48 @@
                     <input type="number" class="form-control" id="year" name="year" required>
                 </div>
             </div>
+            <div class="form-row">
+                <div class="form-group col-sm-6">
+                    <label>Pracownicy:</label>
+                    <% employees && employees.forEach(function(employee) { %>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="<%= employee.id %>" name="employees" value='{"id":"<%= employee.id %>", "name": "<%= employee.firstname %> <%= employee.lastname %>"}'>
+                            <label class="custom-control-label" for="<%= employee.id  %>"><%= employee.firstname %> <%= employee.lastname %></label>
+                        </div>
+                    <% }); %>
+                </div>
+                <div class="form-group col-sm-6">
+                    <div class="form-group">
+                        <label>Klient:</label>
+                        <select class="form-control" id="client" name="clientId" required>
+                            <option value="" disabled selected>Wybierz klienta</option>
+                            <% clients && clients.forEach(function(client) { %>
+                                <option value="<%= client.id %>"><%= client.firstname %> <%= client.lastname %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientName">Imię i nazwisko</label>
+                        <input type="text" class="form-control" id="clientName" name="clientName" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="text" class="form-control" id="email" name="email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Telefon</label>
+                        <input type="text" class="form-control" id="phone" name="phone" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-12">
+                    <label for="description">Opis</label>
+                    <input type="text" class="form-control" id="description" name="description">
+                </div>
+            </div>
             <div class="d-flex flex-row-reverse">
-                <button type="submit" class="btn btn-primary">Dodaj</button>
+                <button type="submit" class="btn btn-primary">Utwórz</button>
             </div>
         </form>
     </div>
@@ -92,21 +93,17 @@
 
 <script>
     const client = document.getElementById("client");
-    const employee = document.getElementById("employee");
     const clientName = document.getElementById("clientName");
-    const employeeName = document.getElementById("employeeName");
+    const clientEmail = document.getElementById("email");
+    const clientPhone = document.getElementById("phone");
     const clients = <%- JSON.stringify(clients) %>;
-    const employees = <%- JSON.stringify(employees) %>;
 
     client.addEventListener("change", (ev) => {
-        const client = clients.filter(client => client.id === ev.target.value);
-        clientName.value = `${client[0].firstName} ${client[0].lastName}`;
-    }, false);
-
-    employee.addEventListener("change", (ev) => {
-        const employee = employees.filter(employee => employee.id === ev.target.value);
-        employeeName.value = `${employee[0].firstName} ${employee[0].lastName}`;
-    }, false);
+        const result = clients.filter(item => item.id === ev.target.value);
+        clientName.value = `${result[0].firstname} ${result[0].lastname}`;
+        clientEmail.value = result[0].email;
+        clientPhone.value = result[0].phone;
+    },false)
 </script>
 
 </body>

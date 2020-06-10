@@ -1,26 +1,13 @@
 const {v4: uuidv4} = require('uuid');
-const cassandra = require('cassandra-driver');
-const keysToCamelCase = require('../utils/keysUnderscoreToCamelCase');
-const {keyspace, tableClient, tableVisit, tableClientVisits, tableEmployeeVisits} = require('../constants');
+const {tableClient, tableClientColumns} = require('../constants');
 
 const client = (db) => {
-    const Mapper = cassandra.mapping.Mapper;
-    const mapper = new Mapper(db, {
-        models: {
-            'Client': {
-                tables: ['client'],
-                keyspace,
-                mappings: new cassandra.mapping.UnderscoreCqlToCamelCaseMappings()
-            }
-        }
-    });
-    const clientMapper = mapper.forModel('Client');
 
     return {
         getAllClients: async (req, res) => {
             try {
                 const result = await db.execute(`SELECT * FROM ${tableClient};`);
-                const clients = keysToCamelCase(result.rows);
+                const clients = result.rows;
                 res.render('pages/client', {clients});
             } catch (err) {
                 console.error(err.message);
@@ -29,8 +16,8 @@ const client = (db) => {
         getSingleClient: async (req, res) => {
             try {
                 const id = req.params.id;
-                const result = await clientMapper.find({id});
-                const clientDetails = result.first();
+                const result = await db.execute(`SELECT * FROM ${tableClient} WHERE id = '${id}'`);
+                const clientDetails = result.rows[0];
                 res.render('pages/client-id', {clientDetails});
             } catch (err) {
                 console.error(err.message);
@@ -52,7 +39,7 @@ const client = (db) => {
                     phone: req.body.phone,
                     email: req.body.email,
                 };
-                await clientMapper.insert(client);
+                await db.execute(`INSERT INTO ${tableClient} JSON '${JSON.stringify(client)}';`);
                 res.render('pages/success', {success: "Dodano klienta"});
             } catch (err) {
                 console.error(err.message);
@@ -60,32 +47,23 @@ const client = (db) => {
         },
         updateClient: async (req, res) => {
             try {
+                const id = req.body.id;
                 const client = {
-                    id: req.body.id,
-                    clientId: req.body.id,
                     firstName: req.body.firstName,
                     lastName: req.body.lastName,
                     phone: req.body.phone,
                     email: req.body.email,
-                    clientName: `${req.body.firstName} ${req.body.lastName}`
                 };
-                const clientName = `${client.firstName} ${client.lastName}`;
-
-                await clientMapper.update(client);
-
-                const result = await db.execute(`SELECT * FROM ${tableClientVisits} WHERE client_id = '${client.id}';`);
-                for (const row of result.rows) {
-                    await db.execute(`UPDATE ${tableClientVisits} SET client_name = '${clientName}' WHERE client_id = '${client.id}' AND visit_id = '${row.visit_id}';`);
-                    const resultVisits = await db.execute(`SELECT * FROM ${tableVisit} WHERE visit_id = '${row.visit_id}';`);
-                    for(const rowVisits of resultVisits.rows) {
-                        await db.execute(`UPDATE ${tableVisit} SET client_name = '${clientName}' WHERE visit_id = '${rowVisits.visit_id}';`);
-                    }
-                    const resultEmpVisits = await db.execute(`SELECT * FROM ${tableEmployeeVisits} WHERE employee_id = '${row.employee_id}';`);
-                    for(const rowClientVisits of resultEmpVisits.rows) {
-                        await db.execute(`UPDATE ${tableEmployeeVisits} SET client_name = '${clientName}' WHERE employee_id = '${rowClientVisits.employee_id}' AND visit_id = '${row.visit_id}';`);
-                    }
-                }
-
+                const columns = tableClientColumns.split(",")
+                    .map((item) => {
+                        const substr = item.substring(1, item.indexOf(" ", 1));
+                        const value = typeof client[substr] === "number" ? client[substr] : `'${client[substr]}'`;
+                        return client[substr] ? substr + `=${value}` : "";
+                    })
+                    .filter((item) => item)
+                    .join();
+                const query = `UPDATE ${tableClient} SET ${columns} WHERE id = '${id}';`;
+                db.execute(query);
                 res.render('pages/success', {success: "Zaktualizowano dane o kliencie"});
             } catch (err) {
                 console.error(err.message);
@@ -94,21 +72,7 @@ const client = (db) => {
         deleteClient: async (req, res) => {
             try {
                 const id = req.body.id;
-
-                const result = await db.execute(`SELECT * FROM ${tableClientVisits} WHERE client_id = '${id}';`);
-                for (const row of result.rows) {
-                    await db.execute(`DELETE FROM ${tableClientVisits} WHERE client_id = '${id}' AND visit_id = '${row.visit_id}';`);
-                    const resultVisits = await db.execute(`SELECT * FROM ${tableVisit} WHERE visit_id = '${row.visit_id}';`);
-                    for(const rowVisits of resultVisits.rows) {
-                        await db.execute(`DELETE FROM ${tableVisit} WHERE visit_id = '${rowVisits.visit_id}';`);
-                    }
-                    const resultEmpVisits = await db.execute(`SELECT * FROM ${tableEmployeeVisits} WHERE employee_id = '${row.employee_id}';`);
-                    for(const rowClientVisits of resultEmpVisits.rows) {
-                        await db.execute(`DELETE FROM ${tableEmployeeVisits} WHERE employee_id = '${rowClientVisits.employee_id}' AND visit_id = '${row.visit_id}';`);
-                    }
-                }
-
-                await clientMapper.remove({id})
+                await db.execute(`DELETE FROM ${tableClient} WHERE id = '${id}';`);
                 res.render('pages/success', {success: "Usunięto klienta"});
             } catch (err) {
                 console.error(err.message);
