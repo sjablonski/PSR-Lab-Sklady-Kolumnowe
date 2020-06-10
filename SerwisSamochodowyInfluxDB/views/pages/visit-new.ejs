@@ -8,58 +8,106 @@
 <main>
     <div class="container my-4">
         <form method="POST" enctype="application/x-www-form-urlencoded">
-            <input type="hidden" name="doctorID" value="<%= doctor.id %>">
             <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="firstName">Imię</label>
-                    <input type="text" class="form-control" id="firstName" name="firstName" value="<%= doctor.firstName %>" readonly>
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="lastName">Nazwisko</label>
-                    <input type="text" class="form-control" id="lastName" name="lastName" value="<%= doctor.lastName %>" readonly>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-4">
                     <label for="date">Data</label>
-                    <input type="text" class="form-control" id="date" name="date" required>
+                    <input type="date" class="form-control" id="date" name="date" required>
                 </div>
-                <div class="form-group col-md-6">
-                    <label for="type">Wizyta w ramach</label>
-                    <select id="type" name="type" class="custom-select" required>
-                        <option value="NFZ">NFZ</option>
-                        <option value="Prywatna">Prywatna</option>
+                <div class="form-group col-md-4">
+                    <label for="type">Rodzaj wizyty</label>
+                    <select class="form-control" id="type" name="type" required>
+                        <option value="" disabled selected>Wybierz rodzaj wizyty</option>
+                        <option value="overview">Przegląd</option>
+                        <option value="diagnostics">Diagnostyka</option>
+                        <option value="repair">Naprawa</option>
+                        <option value="service">Serwis</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="" disabled selected>Wybierz status</option>
+                        <option value="open">Niezrealizowana</option>
+                        <option value="close">Zrealizowana</option>
                     </select>
                 </div>
             </div>
             <div class="form-row">
+                <div class="form-group col-md-8">
+                    <label for="description">Opis</label>
+                    <textarea class="form-control" id="description" name="description" rows="1"></textarea>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="cost">Koszt</label>
+                    <input type="number" class="form-control" id="price" name="price">
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group col-sm-6">
-                    <label>Specjalizacje:</label>
-                    <% doctor.specializations && doctor.specializations.forEach(function(spec) { %>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" class="custom-control-input" id="<%= spec %>" name="specializations" value="<%= spec %>">
-                        <label class="custom-control-label" for="<%= spec %>"><%= spec %></label>
-                    </div>
-                    <% }); %>
+                    <h5>Pracownicy</h5>
+                    <select class="form-control" id="employee" name="employeeID" required>
+                        <option value="" disabled selected>Wybierz pracownika</option>
+                        <% employees && employees.forEach(function(employee) { %>
+                            <option value="<%= employee.id %>"><%= employee.firstName %> <%= employee.lastName %></option>
+                        <% }); %>
+                        <input type="text" class="form-control" id="employeeName" name="employeeName" hidden>
+                    </select>
                 </div>
                 <div class="form-group col-sm-6">
-                    <label>Przychodnie:</label>
-                    <% doctor.clinics && doctor.clinics.forEach(function(clinic) { %>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" class="custom-control-input" id="<%= clinic.id %>" name="clinic" value="<%= clinic.id %>;<%= clinic.name %>">
-                        <label class="custom-control-label" for="<%= clinic.id %>"><%= clinic.name %></label>
+                    <div class="form-group">
+                        <h5>Klient</h5>
+                        <select class="form-control" id="client" name="clientID" required>
+                            <option value="" disabled selected>Wybierz klienta</option>
+                            <% clients && clients.forEach(function(client) { %>
+                                <option value="<%= client.id %>"><%= client.firstName %> <%= client.lastName %></option>
+                            <% }); %>
+                        </select>
+                        <input type="text" class="form-control" id="clientName" name="clientName" hidden>
                     </div>
-                    <% }); %>
+                </div>
+            </div>
+            <h5>Dane samochodu</h5>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="manufacturer">Producent</label>
+                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="model">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="year">Rok produkcji</label>
+                    <input type="number" class="form-control" id="year" name="year" required>
                 </div>
             </div>
             <div class="d-flex flex-row-reverse">
-                <button type="submit" class="btn btn-primary">Utwórz</button>
+                <button type="submit" class="btn btn-primary">Dodaj</button>
             </div>
         </form>
     </div>
 </main>
 
 <%- include ("../partials/scripts") %>
+
+<script>
+    const client = document.getElementById("client");
+    const employee = document.getElementById("employee");
+    const clientName = document.getElementById("clientName");
+    const employeeName = document.getElementById("employeeName");
+    const clients = <%- JSON.stringify(clients) %>;
+    const employees = <%- JSON.stringify(employees) %>;
+
+    client.addEventListener("change", (ev) => {
+        const client = clients.filter(client => client.id === ev.target.value);
+        clientName.value = `${client[0].firstName} ${client[0].lastName}`;
+    }, false);
+
+    employee.addEventListener("change", (ev) => {
+        const employee = employees.filter(employee => employee.id === ev.target.value);
+        employeeName.value = `${employee[0].firstName} ${employee[0].lastName}`;
+    }, false);
+</script>
 
 </body>
 </html>

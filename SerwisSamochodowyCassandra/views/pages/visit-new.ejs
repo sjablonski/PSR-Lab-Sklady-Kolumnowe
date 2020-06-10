@@ -9,11 +9,11 @@
     <div class="container my-4">
         <form method="POST" enctype="application/x-www-form-urlencoded">
             <div class="form-row">
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-4">
                     <label for="date">Data</label>
                     <input type="date" class="form-control" id="date" name="date" value="<%= new Date().toISOString().substr(0, 10); %>" required>
                 </div>
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-4">
                     <label for="type">Rodzaj wizyty</label>
                     <select class="form-control" id="type" name="type" required>
                         <option value="overview">Przegląd</option>
@@ -22,7 +22,12 @@
                         <option value="service">Serwis</option>
                     </select>
                 </div>
+                <div class="form-group col-md-4">
+                    <label for="cost">Koszt</label>
+                    <input type="number" class="form-control" id="cost" name="cost">
+                </div>
             </div>
+            <h4>Dane samochodu</h4>
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="manufacturer">Producent</label>
@@ -34,7 +39,7 @@
                 </div>
                 <div class="form-group col-md-4">
                     <label for="year">Rok produkcji</label>
-                    <input type="text" class="form-control" id="year" name="year" required>
+                    <input type="number" class="form-control" id="year" name="year" required>
                 </div>
             </div>
             <div class="form-row">

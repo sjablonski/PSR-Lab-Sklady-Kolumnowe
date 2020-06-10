@@ -92,10 +92,11 @@ const visit = (db) => {
                     id: uuidv4().substr(0, 5),
                     date: req.body.date,
                     type: req.body.type,
+                    cost: parseFloat(req.body.cost),
                     car: {
                         manufacturer: req.body.manufacturer,
                         model: req.body.model,
-                        year: req.body.year
+                        year: parseInt(req.body.year)
                     },
                     employees,
                     client: {
@@ -123,6 +124,7 @@ const visit = (db) => {
                 const visit = {
                     date: req.body.date,
                     type: req.body.type,
+                    cost: parseFloat(req.body.cost),
                     car: {
                         manufacturer: req.body.manufacturer,
                         model: req.body.model,

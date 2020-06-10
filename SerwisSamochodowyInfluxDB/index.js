@@ -1,47 +1,47 @@
 const express = require('express');
 const methodOverride = require('method-override');
+const Influx = require('influx');
 const routes = require('./routes');
-const MongoClient = require('./MongoClientInstance');
+const {connectOptions, database} = require('./constants');
 
 const app = express();
 
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({extended: true}))
 app.use(methodOverride(function (req, res) {
-  if (req.body && typeof req.body === 'object' && '_method' in req.body) {
-    const method = req.body._method
-    delete req.body._method
-    return method
-  }
+    if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+        const method = req.body._method
+        delete req.body._method
+        return method
+    }
 }));
 app.set('view engine', 'ejs');
 
-MongoClient.connect().then(db => {
-  try {
-    db.createCollection("clinics", function(err) {
-      if (err) throw err;
-      console.log("Clinics collection created!");
+const influx = new Influx.InfluxDB(connectOptions);
+
+influx.getDatabaseNames()
+    .then(names => {
+        if (!names.includes(database)) {
+            return influx.createDatabase(database);
+        }
+    })
+    .then(() => {
+        routes(app, influx);
+        const server = app.listen(3001, function () {
+            const host = server.address().address;
+            const port = server.address().port;
+
+            console.log("App listening at http://%s:%s", host, port)
+        });
+    })
+    .catch(err => {
+        console.error(err.message);
     });
 
-    db.createCollection("doctors", function(err) {
-      if (err) throw err;
-      console.log("Doctors collection created!");
-    });
-
-    db.createCollection("visits", function(err) {
-      if (err) throw err;
-      console.log("Visits collection created!");
-    });
-
-    routes(app, db);
-
-    const server = app.listen(3001, function () {
-      const host = server.address().address;
-      const port = server.address().port;
-
-      console.log("App listening at http://%s:%s", host, port)
-    });
-  } catch (e) {
-    console.error(e.message);
-    process.exit(1)
-  }
+process.on('SIGINT', async () => {
+    try {
+        await influx.dropDatabase(database);
+        process.exit();
+    } catch (err) {
+        console.error(err.message);
+    }
 });

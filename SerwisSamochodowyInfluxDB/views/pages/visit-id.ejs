@@ -7,51 +7,94 @@
 <%- include ("../partials/header") %>
 <main>
     <div class="container my-4">
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="doctorName">Lekarz</label>
-                <input type="text" class="form-control" id="doctorName" name="doctorName"
-                       value="<%= visit.doctor.name %>" readonly>
+        <form method="POST" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" name="_method" value="PUT">
+            <input type="hidden" name="id" value="<%= visit.visitID %>">
+            <input type="hidden" name="clientID" value="<%= visit.clientID %>">
+            <input type="hidden" name="employeeID" value="<%= visit.employeeID %>">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="date">Data</label>
+                    <input type="date" class="form-control" id="date" name="date" value="<%= visit.date %>" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="type">Rodzaj wizyty</label>
+                    <select class="form-control" id="type" name="type" required>
+                        <option value="" disabled selected>Wybierz rodzaj wizyty</option>
+                        <option value="overview">Przegląd</option>
+                        <option value="diagnostics">Diagnostyka</option>
+                        <option value="repair">Naprawa</option>
+                        <option value="service">Serwis</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="" disabled selected>Wybierz status</option>
+                        <option value="open">Niezrealizowana</option>
+                        <option value="close">Zrealizowana</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <label for="patientName">Pacjent</label>
-                <input type="text" class="form-control" id="patientName" name="patientName"
-                       value="<%= visit.patient.firstName %> <%= visit.patient.lastName %>" readonly>
+            <div class="form-row">
+                <div class="form-group col-md-8">
+                    <label for="description">Opis</label>
+                    <textarea class="form-control" id="description" name="description" rows="1"><%= visit.description %></textarea>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="cost">Koszt</label>
+                    <input type="number" class="form-control" id="price" name="price" value="<%= visit.price %>">
+                </div>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="date">Data</label>
-                <input type="text" class="form-control" id="date" name="date" value="<%= visit.date %>" readonly>
+            <div class="form-row">
+                <div class="form-group col-sm-6">
+                    <h5>Pracownik</h5>
+                    <div class="form-group">
+                        <label for="employeeName">Imię i nazwisko</label>
+                        <input type="text" class="form-control" id="employeeName" name="employeeName" value="<%= visit.employeeName %>" readonly>
+                    </div>
+                </div>
+                <div class="form-group col-sm-6">
+                    <h5>Klient</h5>
+                    <div class="form-group">
+                        <label for="clientName">Imię i nazwisko</label>
+                        <input type="text" class="form-control" id="clientName" name="clientName" value="<%= visit.clientName %>" readonly>
+                    </div>
+                </div>
             </div>
-            <div class="form-group col-md-6">
-                <label for="type">Wizyta w ramach</label>
-                <input type="text" class="form-control" id="type" name="type" value="<%= visit.type %>" readonly>
+            <h5>Dane samochodu</h5>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="manufacturer">Producent</label>
+                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" value="<%= visit.carManufacturer %>" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="model">Model</label>
+                    <input type="text" class="form-control" id="model" name="model" value="<%= visit.carModel %>" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="year">Rok produkcji</label>
+                    <input type="number" class="form-control" id="year" name="year" value="<%= visit.carYear %>" required>
+                </div>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="specialization">Specjalizacja</label>
-                <input type="text" class="form-control" id="specialization" name="specialization"
-                       value="<%= visit.specialization %>" readonly>
+            <div class="d-flex flex-row-reverse">
+                <button type="submit" class="btn btn-primary">Edytuj</button>
             </div>
-            <div class="form-group col-md-6">
-                <label for="clinic">Przychodnia</label>
-                <input type="text" class="form-control" id="clinic" name="clinic" value="<%= visit.clinic && visit.clinic.name %>"
-                       readonly>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-12">
-                <label for="description">Opis</label>
-                <input type="text" class="form-control" id="description" name="description"
-                       value="<%= visit.patient.description %>" readonly>
-            </div>
-        </div>
+        </form>
     </div>
 </main>
 
 <%- include ("../partials/scripts") %>
+
+<script>
+    const status = document.getElementById("status");
+    const type = document.getElementById("type");
+    const visit = <%- JSON.stringify(visit) %>;
+
+    status.value = visit.status;
+    type.value = visit.type;
+
+</script>
 
 </body>
 </html>

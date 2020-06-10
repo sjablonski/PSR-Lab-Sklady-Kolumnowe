@@ -75,13 +75,13 @@ client.connect()
 
 process.on('SIGINT', async () => {
     try {
-        // await client.execute(`DROP TABLE IF EXISTS ${tableVisit};`);
-        // await client.execute(`DROP TABLE IF EXISTS ${tableClient};`);
-        // await client.execute(`DROP TABLE IF EXISTS ${tableEmployee};`);
-        // await client.execute(`DROP TYPE IF EXISTS ${typeClient};`);
-        // await client.execute(`DROP TYPE IF EXISTS ${typeEmployee};`);
-        // await client.execute(`DROP TYPE IF EXISTS ${typeCar};`);
-        // await client.execute(`DROP KEYSPACE IF EXISTS ${keyspace};`);
+        await client.execute(`DROP TABLE IF EXISTS ${tableVisit};`);
+        await client.execute(`DROP TABLE IF EXISTS ${tableClient};`);
+        await client.execute(`DROP TABLE IF EXISTS ${tableEmployee};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeClient};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeEmployee};`);
+        await client.execute(`DROP TYPE IF EXISTS ${typeCar};`);
+        await client.execute(`DROP KEYSPACE IF EXISTS ${keyspace};`);
         process.exit();
     } catch (err) {
         console.error(err.message);
